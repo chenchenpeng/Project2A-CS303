@@ -1,100 +1,98 @@
 #ifndef BOOK_H
 #define BOOK_H
 
-#include <stdio.h>
-#include <string>
-#include "pQueue.h"
-#include <list>
 #include "Date.h"
 #include "Employee.h"
-
-using namespace std;
+#include "Priority_Queue.h"
+#include <list>
+#include <string>
 
 class Book {
+
 private:
-	string name;
+
+	std::string name;
 	Date startDate;
 	Date endDate;
 	bool archived;
-	pQueue waiting;
+	Priority_Queue<Employee*> waiting;  // Pointers to each waiting employee.
 	Date lastHeld;
+
 public:
-	Book() {}
-	Book(string bookName) {
+
+	Book(const std::string& bookName) {
 		name = bookName;
 	}
 
-	Book(string bookName, Date start) {
+	Book(const std::string& bookName, const Date& start) {
 		name = bookName;
 		startDate = start;
 	}
-
-	Book(const Book& other) {
-		name = other.name;
-		startDate = other.startDate;
-		endDate = other.endDate;
-		archived = other.archived;
-		waiting = other.waiting;
-	}
-
-	string getname() {
+	
+	std::string getname() const {
 		return name;
 	}
 
-	Date getstartDate() {
+	Date getstartDate() const {
 		return startDate;
 	}
 
-	Date getendDate() {
+	Date getendDate() const {
 		return endDate;
 	}
 
-	bool getarchived() {
+	bool getarchived() const {
 		return archived;
 	}
 
-	Date getHeld() {
+	Date getHeld() const {
 		return lastHeld;
 	}
 
-	void setname(string newName) {
+	void setname(const std::string& newName) {
 		name = newName;
 	}
 
-	void setstartDate(Date newDate) {
-		startDate = lastHeld = newDate;
+	void setstartDate(const Date& newDate) {
+		startDate = newDate;
 	}
 
-	void setendDate(Date newDate) {
+	void setendDate(const Date& newDate) {
 		endDate = newDate;
 	}
 
-	void setarchived(bool newBool) {
+	void setarchived(const bool& newBool) {
 		archived = newBool;
 	}
-	void setHeld(Date date) {
+
+	void setHeld(const Date& date) {
 		lastHeld = date;
 	}
 
-	void populate_queue(list<Employee*> empList) {
-		list<Employee*>::const_iterator itr;
-		for (itr = empList.begin(); itr != empList.end(); itr++) {
-			waiting.addEmployee(*itr);
+	void populate_queue(std::list<Employee>& employ) { 
+		Employee* pte;
+		for (std::list<Employee>::iterator itr = employ.begin(); itr != employ.end(); itr++) {
+			int priority = itr->getPriority();
+			pte = &(*itr);
+			waiting.add_item(pte, priority);  // Add pointers to each employee and their priority.
 		}
-
 	}
 
 	Employee* pop_max() {
 		return waiting.pop_max();
 	}
 
-	Employee* top() {
-		return waiting.top();
+	bool isEmpty() const {
+		return waiting.empty();
 	}
 
-	bool isEmpty() {
-		return waiting.empty();
+	void reprioritize() {
+		waiting.reprioritize();
+	}
+
+	Priority_Queue<Employee*>& get_waiting() {
+		return waiting;
 	}
 };
 
-#endif 
+#endif
