@@ -1,113 +1,79 @@
-//#ifndef LIBRARY_h
-//#define LIBRARY_h
+#ifndef LIBRARY_H
+#define LIBRARY_H
 
-#include<iostream>
-#include<list>
-#include "PriorityQueue.h"
-#include <list>
-#include "Date.h"
-#include "Employee.h"
 #include "Book.h"
+#include "Employee.h"
+#include <list>
+#include <string>
 
+class Library {
 
-using namespace std;
-
-class Library{
 private:
-	list<Book> Archived_Books;
-	list<Book> Circulated_Books;
-	vector<Employee> Employees;
-	PriorityQueue pQueue;
+
+	std::list<Book> toBeCirculated;
+	std::list<Book> archived;
+	std::list<Employee> employeeList;
 
 public:
-	void add_book(string book_name){
-		Book* new_book = new Book(book_name); // we create a new book to add to the list of books
-		Archived_Books.push_back(new_book);
+
+	void add_book(const std::string& newBook) {
+		Book B = Book(newBook);
+		toBeCirculated.push_back(B);
 	}
 
-	void add_employee(string employee_name){
-		Employee* new_employee = new Employee(employee_name); // we create a new employee and add him/her to the employees list
-		 Employees.push_back(*new_employee);
+	void add_employee(const std::string& name) {  // Employees that get books later on.
+		Employee tempEmployee(name);
+		employeeList.push_back(tempEmployee);
 	}
-	Book FindBook(string name, list<Book> &a_list)
-	{
-		Book book;
-		list<Book>::iterator book_item;
 
-		for (book_item = a_list.begin(); book_item != a_list.end(); ++book_item)
-		{
-			if ((*book_item).getname() == name)
+	void circulate_book(const std::string& bookToMove, const Date& dayStart) {
+		for (std::list<Book>::iterator itr = toBeCirculated.begin(); itr != toBeCirculated.end(); itr++) {
+			if (itr->getname() == bookToMove) {
+				itr->setstartDate(dayStart);  // Set the starting circulating date.
+				itr->setHeld(dayStart);  // Set that the held data.
+				itr->populate_queue(employeeList); // Put the waiting employees in the queue.
+				break;
+			}
+		}
+	}
+
+	void pass_on(const std::string& bookToMove, const Date& date) {
+		// Find the book and its priority queue.
+		Employee* EmployeeReturn, EmployeeBorrow;
+		bool erased = false;
+		for (std::list<Book>::iterator itr = toBeCirculated.begin(); itr != toBeCirculated.end(); itr++) {
+			if (itr->getname() == bookToMove)
 			{
-				book = book_item;
-				return book;
+				// Adjust retaining time for the employee who returns the book.
+				EmployeeReturn = itr->get_waiting().peek_max();
+				EmployeeReturn->addretain(date - itr->getHeld());
+				itr->pop_max();  // Remove the top one.
+
+								 // Adjust waiting time for the employee who borrows the book.
+				if (!(itr->isEmpty()))
+				{
+					EmployeeReturn = itr->get_waiting().peek_max();
+					EmployeeReturn->addwait(date - itr->getstartDate());
+					itr->setHeld(date);
+				}
+				else  // If the waiting queue for the book is empty.
+				{
+					itr->setarchived(true);
+					itr->setendDate(date);
+					archived.push_back(*itr);
+					toBeCirculated.erase(itr);
+					erased = true;
+				}
+
+				// Adjust the queues they are in.
+				for (std::list<Book>::iterator itr2 = toBeCirculated.begin(); itr2 != toBeCirculated.end(); itr2++) {
+					itr2->reprioritize();
+				}
+
+				if (erased) break;
 			}
 		}
-		return NULL;
 	}
-
-	void circulate_book(string book_name, Employee *requester){
-
-		Employee *temp_emp = Employees*.pop_back();
-
-		Book *temp_book = FindBook(book_name, Archived_Books);
-		
-		if (temp_book != NULL) {
-			Circulated_Books.push_back(*temp_book);
-			*temp_book.setstartDate(cirDate);
-			*temp_book.add_employee(*requester); 
-			Circulated_Books.push_back(*temp_book);
-		}
-		else{
-			Book *temp_book = FindBook(book_name, Circulated_Books);
-			if (temp_book != NULL) {
-				Employees.push_back(*requester);
-				pQueue.rePrioritize(Employees);
-			}
-			else
-				cout << "The book was not found";
-		}
-	}
-
-	Employee pass_on(string book_name, Date cirDate){
-		Book *temp_book = books.get_book(book_name);
-		temp_book.set_cir_end_date(cirDate);
-		
-		Employee *temp_emp = Employees.get_emp_front();
-		Book *temp_book = books.get_book(book_name);
-		temp_book.set_cir_start_date(cirDate);
-
-
-	}
-	void delete_book(string book_name)
-	{
-		Circulated_Books.delete(book_name);
-		Archived_Books.delete(book_name);
-
-
-	}
-	void delet_emplyee(string emplyee_name)
-	{
-		Employees.delete(employee_name);
-	}
-
-	Book FindBook(string name, list<Book> &a_list)
-	{
-		Book book;
-		list<Book>::iterator book_item;
-
-		for (book_item = a_list.begin(); book_item != a_list.end(); ++book_item)
-		{
-			if ((*book_item).getname() == name)
-			{
-				book = book_item;
-				return book;
-			}
-		}
-		return NULL;
-	}
-
-
-
 };
 
-//#endif
+#endif
